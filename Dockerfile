@@ -1,4 +1,4 @@
-FROM node:16.4.2
+FROM node:16.4.2-slim
 
 WORKDIR /app
 
@@ -11,4 +11,4 @@ RUN npm install
 
 COPY . .
 
-CMD ["bash", "-c", "source .env && npm start"]
+CMD ["bash", "-c", "npm start"]
