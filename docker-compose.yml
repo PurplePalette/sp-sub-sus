@@ -1,0 +1,16 @@
+version: '3.6'
+services:
+  sus:
+    container_name: sonolus_sus_service
+    hostname: sonolus_sus_service
+    image: sevenc7c/sonolus-sus-server
+    ports:
+      - ${PORT_SUS}:3000
+    networks:
+      - local-net
+    environment:
+      - S3_ENDPOINT
+      - S3_BUCKET
+      - S3_REGION
+      - S3_KEY
+      - S3_SECRET
