@@ -1,5 +1,5 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
-import { GetObjectCommand, PutObjectCommand, S3, S3Client } from '@aws-sdk/client-s3';
+import { GetObjectCommand, GetObjectCommandOutput, PutObjectCommand, S3, S3Client } from '@aws-sdk/client-s3';
 import { fromSus } from "sonolus-pjsekai-engine"
 import { gzipPromise, streamToString } from './utils';
 import { Readable } from 'stream';
@@ -15,7 +15,7 @@ const s3: S3Client = new S3Client({
     },
     endpoint: process.env.S3_ENDPOINT,
     forcePathStyle: true,
-    region: process.env.S3_REGION,
+    region: process.env.S3_REGION || 'unknown',
 });
 
 app.use(express.json())
@@ -23,21 +23,22 @@ app.use(express.json())
 
 app.post("/convert", async (req: express.Request, res: express.Response) => {
     const { hash }: PostConvert = req.body;
-    const content = await s3.send(
-        new GetObjectCommand({
-            Bucket: bucket,
-            Key: `/SusFile/${hash}`
-        })
-    )
-    const body = content.Body as Readable;
-    if (!body) {
+    let content: GetObjectCommandOutput;
+    try {
+        content = await s3.send(
+            new GetObjectCommand({
+                Bucket: bucket,
+                Key: `/SusFile/${hash}`
+            })
+        )
+    } catch {
         res.status(404).send({
             error: "File not found",
             code: "file_not_found"
         })
         return;
     }
-
+    const body = content.Body as Readable;
     const data = await fromSus(await streamToString(body));
     const compressed = await gzipPromise(JSON.stringify(data));
     const compressedBuffer = Buffer.from(compressed);
