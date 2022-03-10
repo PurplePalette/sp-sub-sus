@@ -33,37 +33,33 @@ const s3 = new S3Client({
 
 app.use(express.json())
 
-const isError = (d: any): d is S3Error => {
-    if (!d) return false
-    if (d.Code && typeof d.Code === "string" && d.$metadata && typeof d.$metadata === "object") {
-      if (
-        typeof d.$metadata.httpStatusCode === "number"
-      ) {
-        return true
-      }
-    }
-    return false
-}
-
 app.post("/convert", async (req: express.Request, res: express.Response) => {
     const { hash }: PostConvert = req.body
     let content: GetObjectCommandOutput
     try {
+        console.log(hash)
         content = await s3.send(
             new GetObjectCommand({
                 Bucket: bucket,
                 Key: `SusFile/${hash}`
             })
         )
-    } catch (e: unknown) {
-        if (isError(e)) {
-            const err: S3Error = e
-            console.log(`S3 GetObject Error: ${hash} / ${err.$metadata.httpStatusCode} / ${err.Code}`)
+    } catch (e: any) {
+        switch (e.code) {
+            case "NoSuchBucket":
+                res.status(404).send({
+                    error: "File not found",
+                    code: "file_not_found"
+                })
+                break
+            default:
+                console.log("Error while getting file:", e)
+                res.status(500).send({
+                    error: "Internal Server Error",
+                    code: "internal_server_error"
+                })
+                break
         }
-        res.status(404).send({
-            error: "File not found",
-            code: "file_not_found"
-        })
         return
     }
     const body = content.Body as Readable
