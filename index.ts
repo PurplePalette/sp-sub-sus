@@ -33,11 +33,22 @@ const s3 = new S3Client({
 
 app.use(express.json())
 
+const isS3Error = (d: any): d is S3Error => {
+    if (!d) return false
+    if (d.Code && typeof d.Code === "string" && d.$metadata && typeof d.$metadata === "object") {
+        if (
+            typeof d.$metadata.httpStatusCode === "number"
+        ) {
+            return true
+        }
+    }
+    return false
+}
+
 app.post("/convert", async (req: express.Request, res: express.Response) => {
     const { hash }: PostConvert = req.body
     let content: GetObjectCommandOutput
     try {
-        console.log(hash)
         content = await s3.send(
             new GetObjectCommand({
                 Bucket: bucket,
@@ -46,14 +57,19 @@ app.post("/convert", async (req: express.Request, res: express.Response) => {
         )
     } catch (e: any) {
         switch (e.code) {
-            case "NoSuchBucket":
+            case "NoSuchKey":
                 res.status(404).send({
                     error: "File not found",
                     code: "file_not_found"
                 })
                 break
             default:
-                console.log("Error while getting file:", e)
+                if (isS3Error(e)) {
+                    const err: S3Error = e
+                    console.log(`S3 PutObject Error: ${err.$metadata.httpStatusCode} / ${err.Code}`)
+                } else {
+                    console.log(`Unknown error while getting file: ${e}`)
+                }
                 res.status(500).send({
                     error: "Internal Server Error",
                     code: "internal_server_error"
@@ -75,15 +91,21 @@ app.post("/convert", async (req: express.Request, res: express.Response) => {
                 Body: compressedBuffer
             })
         )
+        res.json({
+            hash: compressedHash
+        })
     } catch (e: unknown) {
-        if (isError(e)) {
+        if (isS3Error(e)) {
             const err: S3Error = e
             console.log(`S3 PutObject Error: ${err.$metadata.httpStatusCode} / ${err.Code}`)
+        } else {
+            console.log(`Unknown error while putting file: ${e}`)
         }
+        res.status(500).json({
+            error: "Internal Server Error",
+            code: "internal_server_error"
+        })
     }
-    res.json({
-        hash: compressedHash
-    })
 })
 
 app.use((_req: Request, res: Response, _next: NextFunction) => {
