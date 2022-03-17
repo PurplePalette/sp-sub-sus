@@ -24,6 +24,7 @@
     "@types/aws-sdk": "^2.7.0",
     "dotenv": "^16.0.0",
     "express": "^4.17.3",
+    "sonolus-core": "^1.1.0",
     "sonolus-pjsekai-engine": "^0.1.0-beta.11",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.2"
