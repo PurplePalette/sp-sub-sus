@@ -7,6 +7,7 @@
     "start": "node out/index.js",
     "build": "tsc -p tsconfig.json",
     "dev": "ts-node-dev index.ts",
+    "lint": "tsc -p . --noEmit && eslint --ext .ts .",
     "build:docker": "tsc -p tsconfig.json && docker build -t sonolus-sus-server ."
   },
   "repository": {
@@ -31,7 +32,11 @@
   "devDependencies": {
     "@types/express": "^4.17.13",
     "@types/node": "^17.0.21",
+    "@typescript-eslint/eslint-plugin": "^5.15.0",
     "eslint": "^8.10.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "prettier": "^2.6.0",
     "ts-node-dev": "^1.1.8"
   }
 }
