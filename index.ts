@@ -1,23 +1,10 @@
 import 'dotenv/config'
 import express from 'express'
 import { Request, Response } from 'express'
-import {
-    GetObjectCommand,
-    GetObjectCommandOutput,
-    PutObjectCommand,
-    S3Client,
-} from '@aws-sdk/client-s3'
-import { fromSus } from 'sonolus-pjsekai-engine'
-import { gzipPromise, streamToString } from './utils'
-import { Readable } from 'stream'
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import crypto from 'crypto'
-
-interface S3Error {
-    Code: string
-    $metadata: {
-        httpStatusCode: string
-    }
-}
+import { getSusData, gzipPromise, isS3Error } from './functions'
+import { archetypes, bucket, inputNotes, S3Error } from './constants'
 
 interface PostConvert {
     hash: string
@@ -33,7 +20,6 @@ function checkEnv(key: string): string {
     return process.env[key] || ''
 }
 
-const bucket: string = checkEnv('S3_BUCKET')
 const s3 = new S3Client({
     credentials: {
         accessKeyId: checkEnv('S3_KEY'),
@@ -46,60 +32,13 @@ const s3 = new S3Client({
 
 app.use(express.json())
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const isS3Error = (d: any): d is S3Error => {
-    if (!d) return false
-    if (
-        d.Code &&
-        typeof d.Code === 'string' &&
-        d.$metadata &&
-        typeof d.$metadata === 'object'
-    ) {
-        if (typeof d.$metadata.httpStatusCode === 'number') {
-            return true
-        }
-    }
-    return false
-}
-
 app.post('/convert', async (req: express.Request, res: express.Response) => {
     const { hash }: PostConvert = req.body
-    let content: GetObjectCommandOutput
-    try {
-        content = await s3.send(
-            new GetObjectCommand({
-                Bucket: bucket,
-                Key: `SusFile/${hash}`,
-            })
-        )
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
-        switch (e.code) {
-            case 'NoSuchKey':
-                res.status(404).send({
-                    error: 'File not found',
-                    code: 'file_not_found',
-                })
-                break
-            default:
-                if (isS3Error(e)) {
-                    const err: S3Error = e
-                    console.log(
-                        `S3 PutObject Error: ${err.$metadata.httpStatusCode} / ${err.Code}`
-                    )
-                } else {
-                    console.log(`Unknown error while getting file: ${e}`)
-                }
-                res.status(500).send({
-                    error: 'Internal Server Error',
-                    code: 'internal_server_error',
-                })
-                break
-        }
+    const data = await getSusData(s3, hash, res)
+    if (!data) {
         return
     }
-    const body = content.Body as Readable
-    const data = await fromSus(await streamToString(body))
+
     const compressed = await gzipPromise(JSON.stringify(data))
     const compressedBuffer = Buffer.from(compressed)
     const compressedHash = crypto
@@ -131,6 +70,38 @@ app.post('/convert', async (req: express.Request, res: express.Response) => {
             code: 'internal_server_error',
         })
     }
+})
+
+app.post('/analyze', async (req: express.Request, res: express.Response) => {
+    const { hash } = req.body
+    const data = await getSusData(s3, hash, res)
+    if (!data) {
+        return
+    }
+    res.json({
+        total: data.entities.filter((e) => inputNotes.includes(e.archetype))
+            .length,
+        objects: {
+            slide: data.entities.filter((e) =>
+                [archetypes.slideStart, archetypes.criticalSlideStart].includes(
+                    e.archetype
+                )
+            ).length,
+            tap: data.entities.filter((e) =>
+                [archetypes.tapNote, archetypes.criticalTapNote].includes(
+                    e.archetype
+                )
+            ).length,
+            flick: data.entities.filter((e) =>
+                [
+                    archetypes.flickNote,
+                    archetypes.slideEndFlick,
+                    archetypes.criticalFlickNote,
+                    archetypes.criticalSlideEndFlick,
+                ].includes(e.archetype)
+            ).length,
+        },
+    })
 })
 
 app.use((_req: Request, res: Response) => {
