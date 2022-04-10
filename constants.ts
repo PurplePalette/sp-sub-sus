@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 export const bucket: string = process.env.S3_BUCKET!
 
 export interface S3Error {

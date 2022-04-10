@@ -1,17 +1,10 @@
 import 'dotenv/config'
 import express from 'express'
-import { Request, Response, NextFunction } from 'express'
-import {
-    GetObjectCommand,
-    GetObjectCommandOutput,
-    PutObjectCommand,
-    S3Client,
-} from '@aws-sdk/client-s3'
-import { fromSus } from 'sonolus-pjsekai-engine'
-import { Readable } from 'stream'
+import { Request, Response } from 'express'
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import crypto from 'crypto'
 import { getSusData, gzipPromise, isS3Error } from './functions'
-import { archetypes, bucket, inputNotes, S3Error } from "./constants"
+import { archetypes, bucket, inputNotes, S3Error } from './constants'
 
 interface PostConvert {
     hash: string
@@ -41,8 +34,7 @@ app.use(express.json())
 
 app.post('/convert', async (req: express.Request, res: express.Response) => {
     const { hash }: PostConvert = req.body
-    let content: GetObjectCommandOutput
-    let data = await getSusData(s3, hash, res)
+    const data = await getSusData(s3, hash, res)
     if (!data) {
         return
     }
@@ -80,29 +72,39 @@ app.post('/convert', async (req: express.Request, res: express.Response) => {
     }
 })
 
-app.post("/analyze", async (req: express.Request, res: express.Response) => {
+app.post('/analyze', async (req: express.Request, res: express.Response) => {
     const { hash } = req.body
-    let data = await getSusData(s3, hash, res)
+    const data = await getSusData(s3, hash, res)
     if (!data) {
         return
     }
     res.json({
-        total: data.entities.filter(e => inputNotes.includes(e.archetype)).length,
+        total: data.entities.filter((e) => inputNotes.includes(e.archetype))
+            .length,
         objects: {
-            slide: data.entities.filter(e => [archetypes.slideStart, archetypes.criticalSlideStart].includes(e.archetype)).length,
-            tap: data.entities.filter(e => [archetypes.tapNote, archetypes.criticalTapNote].includes(e.archetype)).length,
-            flick: data.entities.filter(e => [
-                archetypes.flickNote,
-                archetypes.slideEndFlick,
-                archetypes.criticalFlickNote,
-                archetypes.criticalSlideEndFlick
-            ].includes(e.archetype)).length,
-        }
+            slide: data.entities.filter((e) =>
+                [archetypes.slideStart, archetypes.criticalSlideStart].includes(
+                    e.archetype
+                )
+            ).length,
+            tap: data.entities.filter((e) =>
+                [archetypes.tapNote, archetypes.criticalTapNote].includes(
+                    e.archetype
+                )
+            ).length,
+            flick: data.entities.filter((e) =>
+                [
+                    archetypes.flickNote,
+                    archetypes.slideEndFlick,
+                    archetypes.criticalFlickNote,
+                    archetypes.criticalSlideEndFlick,
+                ].includes(e.archetype)
+            ).length,
+        },
     })
-
 })
 
-app.use((_req: Request, res: Response, _next: NextFunction) => {
+app.use((_req: Request, res: Response) => {
     res.status(404).json({ message: 'Not found' })
 })
 
