@@ -13,14 +13,6 @@ import crypto from 'crypto'
 import { getSusData, gzipPromise, isS3Error } from './functions'
 import { archetypes, bucket, inputNotes, S3Error } from "./constants"
 
-const app = express()
-interface S3Error {
-    Code: string
-    $metadata: {
-        httpStatusCode: string
-    }
-}
-
 interface PostConvert {
     hash: string
 }
@@ -35,8 +27,6 @@ function checkEnv(key: string): string {
     return process.env[key] || ''
 }
 
-const bucket: string = checkEnv('S3_BUCKET')
-
 const s3 = new S3Client({
     credentials: {
         accessKeyId: checkEnv('S3_KEY'),
@@ -49,58 +39,14 @@ const s3 = new S3Client({
 
 app.use(express.json())
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const isS3Error = (d: any): d is S3Error => {
-    if (!d) return false
-    if (
-        d.Code &&
-        typeof d.Code === 'string' &&
-        d.$metadata &&
-        typeof d.$metadata === 'object'
-    ) {
-        if (typeof d.$metadata.httpStatusCode === 'number') {
-            return true
-        }
-    }
-    return false
-}
-
 app.post('/convert', async (req: express.Request, res: express.Response) => {
     const { hash }: PostConvert = req.body
     let content: GetObjectCommandOutput
-    try {
-        content = await s3.send(
-            new GetObjectCommand({
-                Bucket: bucket,
-                Key: `SusFile/${hash}`,
-            })
-        )
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
-        switch (e.code) {
-            case 'NoSuchKey':
-                res.status(404).send({
-                    error: 'File not found',
-                    code: 'file_not_found',
-                })
-                break
-            default:
-                if (isS3Error(e)) {
-                    const err: S3Error = e
-                    console.log(
-                        `S3 PutObject Error: ${err.$metadata.httpStatusCode} / ${err.Code}`
-                    )
-                } else {
-                    console.log(`Unknown error while getting file: ${e}`)
-                }
-                res.status(500).send({
-                    error: 'Internal Server Error',
-                    code: 'internal_server_error',
-                })
-                break
-        }
+    let data = await getSusData(s3, hash, res)
+    if (!data) {
         return
     }
+
     const compressed = await gzipPromise(JSON.stringify(data))
     const compressedBuffer = Buffer.from(compressed)
     const compressedHash = crypto
