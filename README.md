@@ -2,8 +2,8 @@
 ![Node Version](https://img.shields.io/badge/node-v16.4-yellow)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-sus file to sonolus level convertion server for [sonolus-fastapi](https://github.com/PurplePalette/sonolus-fastapi).
-this server meant micro service to make preview jacket.
+sus file to sonolus level convertion server for [sonolus-fastapi](https://github.com/PurplePalette/sonolus-fastapi).  
+this server meant micro service to make level data.
 
 
 ## Requirements
