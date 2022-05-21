@@ -1,4 +1,4 @@
-name: Run lint
+name: Run test
 on:
   push:
     branches:
@@ -17,6 +17,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 16
+      - name: Start minio
+        run: |
+          docker-compose up -d minio
+          docker-compose up createbuckets
       - name: Install dependencies
         run: npm install
       - name: Run test
