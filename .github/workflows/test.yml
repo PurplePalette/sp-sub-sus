@@ -19,6 +19,7 @@ jobs:
           node-version: 16
       - name: Start minio
         run: |
+          cp .env.test .env
           docker-compose up -d minio
           docker-compose up createbuckets
       - name: Install dependencies
