@@ -120,3 +120,5 @@ if (require.main === module) {
         console.log(`Server listening on port ${port}`)
     })
 }
+
+export default app

@@ -46,7 +46,7 @@ export async function getSusData(
         )
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
-        switch (e.code) {
+        switch (e.Code) {
             case 'NoSuchKey':
                 res.status(404).send({
                     error: 'File not found',
