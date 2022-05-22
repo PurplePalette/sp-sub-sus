@@ -1,0 +1,28 @@
+name: Run test
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Start minio
+        run: |
+          cp .env.test .env
+          docker-compose up -d minio
+          docker-compose up createbuckets
+      - name: Install dependencies
+        run: npm install
+      - name: Run test
+        run: npm run test
