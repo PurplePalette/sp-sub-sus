@@ -48,7 +48,8 @@ export async function getSusData(
     } catch (e: any) {
         switch (e.Code) {
             case 'NoSuchKey':
-                res.status(404).send({
+                console.log(`No such key: SusFile/${hash}`)
+                res.status(404).json({
                     error: 'File not found',
                     code: 'file_not_found',
                 })
@@ -62,7 +63,7 @@ export async function getSusData(
                 } else {
                     console.log(`Unknown error while getting file: ${e}`)
                 }
-                res.status(500).send({
+                res.status(500).json({
                     error: 'Internal Server Error',
                     code: 'internal_server_error',
                 })

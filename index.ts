@@ -40,6 +40,7 @@ app.get('/', (_req: Request, res: Response) => {
 
 app.post('/convert', async (req: express.Request, res: express.Response) => {
     const { hash }: PostConvert = req.body
+    console.log(`Converting ${hash}`)
     const data = await getSusData(s3, hash, res)
     if (!data) {
         return
