@@ -72,7 +72,25 @@ export async function getSusData(
         return
     }
     const body = content.Body as Readable
-    const data = fromSus(await streamToString(body))
+    let data: LevelData
+    try {
+        data = fromSus(await streamToString(body))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (e: any) {
+        console.log(`Error while parsing SUS file: ${e}`)
+        if (e.message.includes('Unexpected missing bar')) {
+            res.status(400).json({
+                error: 'Unexpected missing bar',
+                code: 'unexpected_missing_bar',
+            })
+            return
+        }
+        res.status(500).json({
+            error: 'Internal Server Error',
+            code: 'internal_server_error',
+        })
+        return
+    }
     return data
 }
 
