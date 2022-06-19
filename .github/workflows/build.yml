@@ -30,4 +30,4 @@ jobs:
           password: ${{ secrets.DOCKER_TOKEN }}
       - name: Build image
         run: |
-          docker buildx build --platform linux/amd64,linux/arm64 --push --tag sevenc7c/sonolus-sus-server:latest
+          docker buildx build --platform linux/amd64,linux/arm64 --push --tag sevenc7c/sonolus-sus-server:latest .
