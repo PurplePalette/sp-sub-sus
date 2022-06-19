@@ -16,6 +16,7 @@ FROM node:16.4.2-slim AS run
 
 WORKDIR /app
 EXPOSE 3000
+ENV NODE_ENV production
 
 COPY package.json .
 COPY package-lock.json .
