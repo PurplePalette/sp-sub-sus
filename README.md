@@ -1,7 +1,7 @@
 # sonolus-sus-server
 ![Node Version](https://img.shields.io/badge/node-v16.4-yellow)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/purplepalette/sonolus-sus-server/Build%20and%20push%20image?label=build)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/purplepalette/sonolus-sus-server/Build%20and%20push%20image?label=build)  
 sus file to sonolus level convertion server for [sonolus-fastapi](https://github.com/PurplePalette/sonolus-fastapi).  
 this server meant micro service to make level data.
 
