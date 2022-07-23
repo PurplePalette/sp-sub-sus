@@ -36,12 +36,6 @@ jobs:
           TZ: 'Asia/Tokyo' # タイムゾーン指定
         run: echo "CURRENT_DATETIME=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
 
-      - name: Prepare Author Name Arg
-        run: |
-          echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
-        env:
-          OWNER: '${{ github.repository_owner }}'
-
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1
         with:
@@ -56,7 +50,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ env.OWNER_LC }}/sonolus-sus-server:${{ env.CURRENT_DATETIME }},ghcr.io/${{ env.OWNER_LC }}/sonolus-difficulty-server:latest
+            ghcr.io/${{ github.repository }}:${{ env.CURRENT_DATETIME }},ghcr.io/${{ github.repository }}:latest
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.clone_url }}
           cache-from: type=local,src=/tmp/.buildx-cache
