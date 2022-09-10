@@ -10,6 +10,22 @@ this server meant micro service to make level data.
 * Node 16
 * Any S3 storage(Recommends [B2 Cloud Storage](https://www.backblaze.com/b2/cloud-storage.html) with [Cloudflare](https://cloudflare.com/))
 
+
+## Development setup
+```bash
+# Install dependencies
+git clone https://github.com/PurplePalette/sp-sub-sus
+cd sp-sub-sus
+npm install
+# Create dev server
+cp .env.test .env
+docker-compose up -d
+# Run dev server
+(stop sus container)
+npm run dev
+(or run jest test)
+```
+
 ## Docs
 - [API Spec / Stoplight](https://sonolus-core.stoplight.io/docs/sub-servers/YXBpOjUxODQ0MDcz-sonolus-sus-server)
 - [Detailed spec / Whimsical (TODO)](#)
